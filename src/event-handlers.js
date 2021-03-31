@@ -4,11 +4,11 @@ const mouseDownHandler = function (evt) {
   }
 
   // Don't add the next sticker until we placed the current one
-  if(this.state._stickerAdded && this.state.sticker.active) {
+  if (this.state._stickerAdded && this.state.sticker.active) {
     return this;
   }
 
-  if(this.state._stickerAdded) {
+  if (this.state._stickerAdded) {
     return this;
   }
 
@@ -16,9 +16,9 @@ const mouseDownHandler = function (evt) {
 };
 
 const mouseUpHandler = function () {
-  let config = this._config.stickerControls || {};
-  let noBorder = config.cornerSize === 0 || !config.hasBorders;
-  if(this.state._stickerAdded && this.state.sticker.active && noBorder) {
+  const config = this._config.stickerControls || {};
+  const noBorder = config.cornerSize === 0 || !config.hasBorders;
+  if (this.state._stickerAdded && this.state.sticker.active && noBorder) {
     this._canvas.setCursor('move');
   }
 
@@ -26,7 +26,7 @@ const mouseUpHandler = function () {
 };
 
 const disableSelectabilityHandler = function (evt) {
-  if (evt.target instanceof fabric.Image) {
+  if ((evt.target instanceof fabric.Image) || (evt.target instanceof fabric.IText) || (evt.target instanceof fabric.Text)) {
     return;
   }
 
@@ -52,10 +52,10 @@ const recordObjectAddition = function (historyManager, fabricEvent) {
   var serializedTarget = JSON.stringify(fabricEvent.target);
   var objectAlreadyInHistory = historyManager.history
     .reduce((a, b) => a.concat(b), []) // flatten the array
-    .filter(historyEvent => historyEvent.type === 'add') // only get add events
-    .some(historyEvent => historyEvent.data === serializedTarget); // target is already there?
+    .filter((historyEvent) => historyEvent.type === 'add') // only get add events
+    .some((historyEvent) => historyEvent.data === serializedTarget); // target is already there?
 
-  if(objectAlreadyInHistory) {
+  if (objectAlreadyInHistory) {
     return;
   }
 
@@ -73,11 +73,11 @@ const recordObjectAddition = function (historyManager, fabricEvent) {
  */
 const lastPropertyValue = function (historyManager, fabricObject, propertyName) {
   const flattenedHistory = historyManager.history.reduce((a, b) => a.concat(b), []);
-  for(var i = flattenedHistory.length - 1; i >= 0; i--) {
-    var historyEvent = flattenedHistory[i];
-    if(historyEvent.type === 'add' && historyEvent.objectId === fabricObject.stickerbookObjectId) {
+  for (let i = flattenedHistory.length - 1; i >= 0; i--) {
+    const historyEvent = flattenedHistory[i];
+    if (historyEvent.type === 'add' && historyEvent.objectId === fabricObject.stickerbookObjectId) {
       return JSON.parse(historyEvent.data)[propertyName];
-    } else if(historyEvent.type === 'change' && historyEvent.data.property === propertyName) {
+    } else if (historyEvent.type === 'change' && historyEvent.data.property === propertyName) {
       return historyEvent.data.newValue;
     }
   }
@@ -94,13 +94,18 @@ const lastPropertyValue = function (historyManager, fabricObject, propertyName) 
 const recordPropertyChange = function (historyManager, fabricEvent) {
   const propertyNames = ['scaleX', 'scaleY', 'globalCompositeOperation', 'angle', 'left', 'top'];
   const objectIndex = historyManager.canvas.getObjects().indexOf(fabricEvent.target);
-
-  let propertyDeltas = [];
+  const propertyDeltas = [];
+  
   propertyNames.forEach(function (property) {
     var oldValue = lastPropertyValue(historyManager, fabricEvent.target, property);
     var newValue = fabricEvent.target[property];
-    if(oldValue !== newValue) {
-      propertyDeltas.push({ property, objectIndex, oldValue, newValue });
+    if (oldValue !== newValue) {
+      propertyDeltas.push({
+        property,
+        objectIndex,
+        oldValue,
+        newValue
+      });
     }
   });
   historyManager.pushPropertyChanges(propertyDeltas);

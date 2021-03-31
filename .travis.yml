@@ -12,7 +12,6 @@ addons:
     packages:
       - g++-4.8
 script:
-    - npm install -g gulp
     - npm test
 before_install:
   - sudo apt-get update -qq

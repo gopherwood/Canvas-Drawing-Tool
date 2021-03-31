@@ -347,20 +347,18 @@ provide. Please note that when you call `destroy`, the stickerbook is no longer 
 method call is then considered *undefined behavior*.
 
 ## Building for development
-If you're of a mind to build yourself, you'll need to have `gulp` installed globally (`npm install -g gulp`).
-Then, you can clone the repo and run
+If you're of a mind to build yourself, you can clone the repo and run
 ```
 npm install
-gulp build
+npm run build:release
 ```
 to build yourself.
 
-If you'd like to do some development as well, run `gulp` rather than `gulp build` and then open http://localhost:8000/
+If you'd like to do some development as well, run `start` and then open http://localhost:8000/
 in your browser of choice. As you edit files in `src/`, the stickerbook will be rebuilt, but you'll need to refresh
 the page yourself (sorry, no live-reload at the time of writing).
 
-You can also run your own tests with `npm run test`. You can also see the test suite run by opening `test/index.html`
-in a browser after running `gulp build-test`.
+You can also run your own tests with `npm run test`.
 
 ## Final notes
 - As of 3.0.0, we're no longer binding a Promise polyfill to this library to help cut down on library size. If you need

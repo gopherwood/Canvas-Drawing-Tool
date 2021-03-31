@@ -12,10 +12,10 @@ const PencilEraserBrush = fabric.util.createClass(fabric.PencilBrush, {
    * @param {Object} pointer The mouse pointer
    * @return {void}
    */
-  onMouseDown: function (pointer) {
+  onMouseDown: function (...args) {
     this._setBrushStyles();
 
-    this.callSuper('onMouseDown', pointer);
+    this.callSuper('onMouseDown', ...args);
   },
 
   /**
@@ -27,9 +27,17 @@ const PencilEraserBrush = fabric.util.createClass(fabric.PencilBrush, {
     this.callSuper('_setBrushStyles');
 
     // pre-calculate the background pattern
-    var background = this.canvas.wrapperEl.previousElementSibling;
-    var precomposited = util.precompositeBackground(background);
+    const background = this.canvas.wrapperEl.previousElementSibling;
+    const precomposited = util.precompositeBackground(background);
     this.color = this.canvas.contextTop.createPattern(precomposited, 'no-repeat');
+  },
+
+  /**
+   * Replaces original method to prevent an issue with fabric attempting to replace pattern with a color.
+   * @returns {boolean}
+   */
+  needsFullRender: function () {
+    return false;
   },
 
   /**

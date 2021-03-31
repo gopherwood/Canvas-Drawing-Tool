@@ -6,15 +6,17 @@
   "repository": "https://github.com/pbs/Canvas-Drawing-Tool",
   "scripts": {
     "lint": "eslint ./src && eslint ./demo/demo.js",
-    "testsuite": "gulp concat-test && phantomjs test/run-tests.js",
+    "testsuite": "phantomjs test/run-tests.js",
     "test": "npm run lint && npm run testsuite",
-    "build": "gulp build",
-    "watch": "gulp"
+    "start": "webpack-dev-server --env.dev",
+    "build:release": "webpack --env.prod",
+    "build:debug": "webpack --env.dev"
   },
   "author": "PBS Kids (www.pbskids.org)",
   "license": "MIT",
   "dependencies": {
-    "ajv": "^4.7.7",
+    "ajv": "^8.0.1",
+    "fabric": "^4.3.1",
     "fuzzy-select": "pbs/fuzzy-select.git#2.0.0"
   },
   "devDependencies": {
@@ -32,11 +34,13 @@
     "gulp": "3.9.1",
     "gulp-concat": "^2.6.1",
     "gulp-streamify": "1.0.2",
-    "gulp-uglify": "^1.5.4",
+    "gulp-uglify-es": "^2.0.0",
     "mocha": "2.5.3",
     "phantomjs-prebuilt": "^2.1.14",
-    "sinon": "1.17.4",
     "vinyl-source-stream": "1.1.0",
-    "watchify": "2.4.0"
+    "watchify": "2.4.0",
+    "webpack": "^4.35.2",
+    "webpack-cli": "^3.3.5",
+    "webpack-dev-server": "^3.11.2"
   }
 }

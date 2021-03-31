@@ -46,20 +46,17 @@ const PatternBrush = fabric.util.createClass(fabric.BaseBrush, {
    * @return {Object} a promise, which resolves when all images are created
    */
   setImages: function (imageUrls) {
-    const brush = this;
     this.imageUrls = imageUrls;
-    const imgPromises = imageUrls.map((url) => {
-      return new Promise((resolve) => {
-        fabric.Image.fromURL(url, (img) => {
-          resolve(img);
-        });
+    const imgPromises = imageUrls.map((url) => new Promise((resolve) => {
+      fabric.Image.fromURL(url, (img) => {
+        resolve(img);
       });
-    });
+    }));
     const loadingPromise = Promise.all(imgPromises).then((images) => {
-      brush.images = images;
+      this.images = images;
       return true;
     });
-    brush.loadingPromise = loadingPromise;
+    this.loadingPromise = loadingPromise;
     return loadingPromise;
   },
 
@@ -74,7 +71,7 @@ const PatternBrush = fabric.util.createClass(fabric.BaseBrush, {
 
     canvas.renderOnAddRemove = false;
     const imageGroup = new fabric.Group(this.placedImages);
-    this.placedImages.map((img) => {
+    this.placedImages.forEach((img) => {
       this.canvas.remove(img);
     });
     this.canvas.add(imageGroup);
@@ -181,7 +178,6 @@ const PatternBrush = fabric.util.createClass(fabric.BaseBrush, {
    * @return {undefined}
    */
   _createImage: function (point) {
-    const brush = this;
     const imgIndex = this._getCurrentImgIndex();
     const cachedImage = this.images[imgIndex];
     cachedImage.clone((img) => {
@@ -189,17 +185,17 @@ const PatternBrush = fabric.util.createClass(fabric.BaseBrush, {
       var displayHeight = img.height * scaleFactor;
 
       // center and scale
-      img.setScaleX(img.getScaleX() * scaleFactor);
-      img.setScaleY(img.getScaleY() * scaleFactor);
-      img.setLeft(point.x - this.width / 2);
-      img.setTop(point.y - displayHeight / 2);
+      img.scaleX *= scaleFactor;
+      img.scaleY *= scaleFactor;
+      img.left = point.x - this.width / 2;
+      img.top = point.y - displayHeight / 2;
       img.setCoords();
 
-      brush.placedImages.push(img);
-      brush.canvas.add(img);
+      this.placedImages.push(img);
+      this.canvas.add(img);
     });
 
-    this._imgIndex = brush._getNextImgIndex();
+    this._imgIndex = this._getNextImgIndex();
   }
 });
 

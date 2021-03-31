@@ -2,7 +2,7 @@
 // in every browser. Based on
 // https://toddmotto.com/ditch-the-array-foreach-call-nodelist-hack/#recommendations
 var forEach = function (array, callback, scope) {
-  for (var i = 0; i < array.length; i++) {
+  for (let i = 0; i < array.length; i++) {
     callback.call(scope, array[i]);
   }
 };
@@ -61,6 +61,26 @@ forEach(document.querySelectorAll('#stickers img'), function (child) {
   });
 });
 
+// wire up text
+document.getElementById('input-text').addEventListener('click', function () {
+  stickerbook.placeText('Edit Text', {
+    left: 50,
+    top: 100,
+    fontFamily: 'arial black',
+    fill: '#333',
+    fontSize: 50
+  });
+});
+document.getElementById('static-text').addEventListener('click', function () {
+  stickerbook.placeText('Static Text', {
+    left: 50,
+    top: 100,
+    fontFamily: 'arial black',
+    fill: '#333',
+    fontSize: 50
+  }, false);
+});
+
 // wire up the background images
 document.getElementById('remove-background').addEventListener('click', function () {
   stickerbook.clearBackground();
@@ -74,7 +94,7 @@ forEach(document.querySelectorAll('#brushes button'), function (child) {
   child.addEventListener('click', function () {
     var brushConfig = {};
 
-    if(child.name === 'pattern') {
+    if (child.name === 'pattern') {
       stickerbook.setBrushWidth(50);
       brushConfig = {
         images: [
@@ -82,11 +102,17 @@ forEach(document.querySelectorAll('#brushes button'), function (child) {
           host + 'images/star.svg'
         ]
       };
-    } else if(child.name === 'bitmap' || child.name === 'bitmap-eraser') {
+    } else if (child.name === 'bitmap' || child.name === 'bitmap-eraser') {
       stickerbook.setBrushWidth(50);
-      brushConfig = { image: host + 'images/star.svg' };
-    } else if(child.name === 'fill') {
-      brushConfig = { isAsync: true, stepsPerFrame: 10, partialFill: false };
+      brushConfig = {
+        image: host + 'images/star.svg'
+      };
+    } else if (child.name === 'fill') {
+      brushConfig = {
+        isAsync: true,
+        stepsPerFrame: 10,
+        partialFill: false
+      };
     }
 
     stickerbook.setBrush(child.name, brushConfig);
@@ -133,7 +159,7 @@ document.getElementById('save').addEventListener('click', function () {
 document.getElementById('destroy').addEventListener('click', function () {
   window.demoStickerbook.destroy();
 
-  var nodesToRemove = document.querySelectorAll('#stickerbook_container, #controls, #stickers');
+  const nodesToRemove = document.querySelectorAll('#stickerbook_container, #controls, #stickers');
   forEach(nodesToRemove, function (node) {
     node.remove();
   });

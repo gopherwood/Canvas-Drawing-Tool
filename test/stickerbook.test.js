@@ -2,7 +2,6 @@
 'use strict';
 
 const expect = require('expect');
-const sinon = require('sinon');
 
 const Stickerbook = require('../src/stickerbook');
 

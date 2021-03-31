@@ -1,13 +1,9 @@
 const validate = require('./validation/validate');
-
-const schema = {
-  stickerbook: require('./validation/stickerbook.json'),
-  pattern: require('./validation/pattern-brush.json'),
-  bitmap: require('./validation/bitmap-brush.json'),
-  'bitmap-eraser': require('./validation/bitmap-brush.json')
-};
-
-const {BaseBrush, CircleBrush, PencilBrush, SprayBrush} = fabric;
+const schemaStickerbook = require('./validation/stickerbook.json');
+const schemaPattern = require('./validation/pattern-brush.json');
+const schemaBitmap = require('./validation/bitmap-brush.json');
+const schemaBitmapEraser = require('./validation/bitmap-brush.json');
+const fabric = require('fabric').fabric;
 const BitmapBrush = require('./brushes/bitmap-brush');
 const BitmapEraserBrush = require('./brushes/bitmap-eraser-brush');
 const FillBrush = require('./brushes/fill-brush');
@@ -22,9 +18,15 @@ const {
   recordObjectAddition,
   recordPropertyChange
 } = require('./event-handlers');
-const { calculateInnerDimensions } = require('./util');
+const {calculateInnerDimensions} = require('./util');
 const HistoryManager = require('./history-manager');
-
+const {BaseBrush, CircleBrush, PencilBrush, SprayBrush} = fabric;
+const schema = {
+  stickerbook: schemaStickerbook,
+  pattern: schemaPattern,
+  bitmap: schemaBitmap,
+  'bitmap-eraser': schemaBitmapEraser
+};
 class Stickerbook {
   /**
    * Construct new stickerbook
@@ -50,7 +52,7 @@ class Stickerbook {
     this._validateConfig(configWithDefaults);
 
     // apply any extra available brushes
-    if(configWithDefaults.brush.custom !== undefined) {
+    if (typeof configWithDefaults.brush.custom !== 'undefined') {
       Object.assign(configWithDefaults, configWithDefaults.brush.custom);
     }
 
@@ -76,8 +78,8 @@ class Stickerbook {
     this._canvas = this._initializeFabricCanvas(this.containerElement);
 
     this.historyManager = new HistoryManager(this._canvas);
-    this._canvas.on('object:added', event => recordObjectAddition(this.historyManager, event));
-    this._canvas.on('object:modified', event => recordPropertyChange(this.historyManager, event));
+    this._canvas.on('object:added', (event) => recordObjectAddition(this.historyManager, event));
+    this._canvas.on('object:modified', (event) => recordPropertyChange(this.historyManager, event));
 
     if (this._config.background && this._config.background.default) {
       this.setBackground(this._config.background.default);
@@ -111,7 +113,9 @@ class Stickerbook {
       useDefaultEventHandlers: false
     };
 
-    return Object.assign({}, defaults, config, { background });
+    return Object.assign({}, defaults, config, {
+      background
+    });
   }
 
   /**
@@ -230,10 +234,10 @@ class Stickerbook {
     var scaleFactor = newDimensions.width / originalDimensions.width;
 
     this._canvas.getObjects().forEach((object) => {
-      object.setScaleX(object.getScaleX() * scaleFactor);
-      object.setScaleY(object.getScaleY() * scaleFactor);
-      object.setLeft(object.getLeft() * scaleFactor);
-      object.setTop(object.getTop() * scaleFactor);
+      object.scaleX *= scaleFactor;
+      object.scaleY *= scaleFactor;
+      object.left *= scaleFactor;
+      object.top *= scaleFactor;
     });
   }
 
@@ -246,12 +250,12 @@ class Stickerbook {
   _validateConfig(config) {
     validate(schema.stickerbook, config);
 
-    if(config.brush.custom === undefined) {
+    if (typeof config.brush.custom === 'undefined') {
       return true;
     }
 
-    Object.keys(config.brush.custom).forEach(key => {
-      if(config.brush.custom[key].prototype instanceof BaseBrush) {
+    Object.keys(config.brush.custom).forEach((key) => {
+      if (config.brush.custom[key].prototype instanceof BaseBrush) {
         return;
       }
 
@@ -279,7 +283,7 @@ class Stickerbook {
       throw new Error(brushName + ' is an unknown brush type');
     }
 
-    let newState = {
+    const newState = {
       brush: brushName,
       drawing: true
     };
@@ -288,7 +292,7 @@ class Stickerbook {
       newState.brushConfig = brushConfig;
 
       // if there are validation rules for the brush's configuration, run a quick check
-      if (schema[brushName] !== undefined) {
+      if (typeof schema[brushName] !== 'undefined') {
         validate(schema[brushName], brushConfig);
       }
     }
@@ -345,8 +349,7 @@ class Stickerbook {
 
     return new Promise((resolve) => {
       fabric.Image.fromURL(stickerUrl, (img) => {
-        var filter = new fabric.Image.filters.Resize();
-        img.resizeFilters.push(filter);
+        img.filters.push(new fabric.Image.filters.Resize());
         this._setState({
           sticker: img,
           drawing: false,
@@ -396,18 +399,18 @@ class Stickerbook {
    * @returns {Object} stickerbook
    */
   setBackground(imageUrl) {
-    if(!imageUrl) {
+    if (!imageUrl) {
       this.clearBackground();
       return this;
     }
 
-    if(!this._config.background || !(this._config.background.enabled instanceof Array)) {
+    if (!this._config.background || !(this._config.background.enabled instanceof Array)) {
       return this;
     }
 
-    var backgroundImageIsEnabled = this._config.background.enabled.indexOf(imageUrl) > -1;
+    const backgroundImageIsEnabled = this._config.background.enabled.indexOf(imageUrl) > -1;
 
-    if(!backgroundImageIsEnabled) {
+    if (!backgroundImageIsEnabled) {
       throw new Error(`${imageUrl} is not a permitted background`);
     }
 
@@ -458,10 +461,10 @@ class Stickerbook {
     // deselect anything before exporting so we don't see scaling handles in the exported image
     this.deselectAll();
 
-    var dummyCanvas = document.createElement('canvas');
+    const dummyCanvas = document.createElement('canvas');
     dummyCanvas.width = this._canvas.lowerCanvasEl.width;
     dummyCanvas.height = this._canvas.lowerCanvasEl.height;
-    var dummyContext = dummyCanvas.getContext('2d');
+    const dummyContext = dummyCanvas.getContext('2d');
 
     dummyContext.drawImage(this.backgroundManager._canvas, 0, 0);
     dummyContext.drawImage(this._canvas.lowerCanvasEl, 0, 0);
@@ -505,8 +508,8 @@ class Stickerbook {
     const objects = this._canvas.getObjects();
     // fabric appends to its objects, so the top object is the furthest to
     // the right
-    for(var i = objects.length - 1; i >= 0; i--) {
-      if(objects[i]._element !== undefined) {
+    for (let i = objects.length - 1; i >= 0; i--) {
+      if (typeof objects[i]._element !== 'undefined') {
         return objects[i];
       }
     }
@@ -526,7 +529,7 @@ class Stickerbook {
    */
   placeSticker(options) {
     var defaults = this._config.stickers.defaults;
-    if(this._config.stickers.defaults) {
+    if (this._config.stickers.defaults) {
       options.x = options.x || defaults.x;
       options.y = options.y || defaults.y;
       options.xScale = options.xScale || defaults.xScale;
@@ -538,7 +541,7 @@ class Stickerbook {
     options.yScale = options.yScale || 1;
     options.rotation = options.rotation || 0;
 
-    if(options.x === undefined || options.y === undefined) {
+    if (typeof options.x === 'undefined' || typeof options.y === 'undefined') {
       throw new Error('To place a sticker an x and y must be provided if there is no default');
     }
 
@@ -556,8 +559,8 @@ class Stickerbook {
 
     // if there are any sticker control configs, apply those styles
     if (this._config.stickers.controls) {
-      var hasBorders = this._config.stickers.controls.hasBorders;
-      if(hasBorders === undefined) {
+      let hasBorders = this._config.stickers.controls.hasBorders;
+      if (typeof hasBorders === 'undefined') {
         hasBorders = true;
       }
       this.state.sticker.set({
@@ -572,19 +575,47 @@ class Stickerbook {
     this._canvas.setActiveObject(this.state.sticker);
 
     // update state
-    this._setState({ _stickerAdded: true });
+    this._setState({
+      _stickerAdded: true
+    });
 
     // Update scaling lock values
-    var self = this;
-    requestAnimationFrame(function () {
-      self.state.sticker.lockScalingX = false;
-      self.state.sticker.lockScalingY = false;
+    requestAnimationFrame(() => {
+      this.state.sticker.lockScalingX = false;
+      this.state.sticker.lockScalingY = false;
     });
 
     // re-render
     return this.triggerRender();
   }
 
+  /**
+   * Place text object.
+   * @param {string} text - The text to be rendered.
+   * @param {object} style - key/value pairs describing style to apply to text.
+   * @param {boolean} isInput - Whether text should be editable.
+   *
+   * @returns A promise that resolves to the stickerbook once the text is placed
+   */
+  placeText(text, style, isInput=true) {
+    // Need validation for text?
+    /*if () {
+      throw new Error('This is not permitted text.');
+    }*/
+    const Text = isInput ? fabric.IText : fabric.Text;
+    const textObj = new Text(text, style);
+
+    this._canvas.add(textObj);
+    this._canvas.setActiveObject(textObj);
+
+    this._setState({
+      drawing: false
+    });
+
+    // re-render
+    return this.triggerRender();
+  }
+  
   /**
    * Trigger a canvas render cycle
    * This is useful for low-level manipulation of objects
@@ -606,7 +637,7 @@ class Stickerbook {
     this._canvas.dispose();
     delete this._canvas;
     delete this.backgroundManager;
-    while(this.containerElement.firstChild) {
+    while (this.containerElement.firstChild) {
       this.containerElement.removeChild(this.containerElement.firstChild);
     }
     this.isDestroyed = true;
