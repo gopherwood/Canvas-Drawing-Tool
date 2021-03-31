@@ -6,12 +6,21 @@ module.exports = (env) => {
   const filename = env.dev ? 'stickerbook.combined.js' : 'stickerbook.min.js';
 
   return {
-    entry: './index.js',
+    entry: ['@babel/polyfill', './index.js'],
     mode: mode,
     output: {
       path: path.resolve(__dirname, 'dist'),
       filename: filename,
       library: 'stickerbook'
+    },
+    module: {
+      rules: [{
+        test: /\.js$/,
+        exclude: /(node_modules|bower_components)/,
+        use: {
+          loader: 'babel-loader'
+        }
+      }]
     }
   };
 };
