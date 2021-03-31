@@ -34,6 +34,13 @@ class Stickerbook {
    * @returns {Object} Stickerbook
    */
   constructor(config) {
+    Object.defineProperty(this, 'lockConfiguration', {
+      enumerable: false,
+      configurable: false,
+      writable: false,
+      value: config.lockConfiguration !== false
+    });
+
     // assign default to the config, if it's missing
     const configWithDefaults = this._applyDefaultConfigs(config);
 
@@ -59,10 +66,10 @@ class Stickerbook {
     this._config = configWithDefaults;
 
     this.state = {
-      brush: configWithDefaults.brush.enabled[0],
-      brushWidth: configWithDefaults.brush.widths[0],
+      brush: configWithDefaults?.brush?.enabled?.[0] ?? 'pencil',
+      brushWidth: configWithDefaults?.brush?.widths?.[0] ?? 1,
       brushConfig: {},
-      color: configWithDefaults.brush.colors[0],
+      color: configWithDefaults?.brush?.colors?.[0] ?? '#000000',
       drawing: true,
       sticker: null,
       historyIndex: null
@@ -324,7 +331,7 @@ class Stickerbook {
    * @returns {Object} Stickerbook
    */
   setColor(color) {
-    if (this._config.brush.colors.indexOf(color) === -1) {
+    if (this.lockConfiguration && this._config.brush.colors.indexOf(color) === -1) {
       throw new Error(color + ' is not a permitted color');
     }
 
@@ -379,7 +386,7 @@ class Stickerbook {
    * @returns {Object[]} array of hex code strings
    */
   getAvailableColors() {
-    return this._config.brush.colors;
+    return this._config?.brush?.colors;
   }
 
   /**
