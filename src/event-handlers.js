@@ -1,18 +1,17 @@
 const mouseDownHandler = function (evt) {
-  if (this.state.drawing || this.state.sticker === null) {
-    return this;
+  if (!this.state.drawing) {
+    if (this.state.sticker) {
+      if (!this.state._stickerAdded) {
+        return this.placeSticker(this._canvas.getPointer(evt.e));
+      }
+    } else if (this.state.text) {
+      if (!this.state._textAdded) {
+        return this.placeText(this._canvas.getPointer(evt.e));
+      }
+    }
   }
 
-  // Don't add the next sticker until we placed the current one
-  if (this.state._stickerAdded && this.state.sticker.active) {
-    return this;
-  }
-
-  if (this.state._stickerAdded) {
-    return this;
-  }
-
-  return this.placeSticker(this._canvas.getPointer(evt.e));
+  return this;
 };
 
 const mouseUpHandler = function () {
@@ -92,7 +91,7 @@ const lastPropertyValue = function (historyManager, fabricObject, propertyName) 
  * @returns {void}
  */
 const recordPropertyChange = function (historyManager, fabricEvent) {
-  const propertyNames = ['scaleX', 'scaleY', 'globalCompositeOperation', 'angle', 'left', 'top'];
+  const propertyNames = ['text', 'scaleX', 'scaleY', 'globalCompositeOperation', 'angle', 'left', 'top'];
   const objectIndex = historyManager.canvas.getObjects().indexOf(fabricEvent.target);
   const propertyDeltas = [];
   

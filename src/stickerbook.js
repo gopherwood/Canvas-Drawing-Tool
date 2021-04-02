@@ -597,26 +597,88 @@ class Stickerbook {
   }
 
   /**
-   * Place text object.
+   * Set text object for placing.
    * @param {string} text - The text to be rendered.
    * @param {object} style - key/value pairs describing style to apply to text.
    * @param {boolean} isInput - Whether text should be editable.
+   * @returns {Promise<Stickerbook>} A promise that resolves to the stickerbook when the text is ready
+   */
+   setText(text, style, isInput=true) {
+    if (this.lockConfiguration && this._config.text.enabled.indexOf(text) === -1) {
+      throw new Error(`${text} is not permitted text`);
+    }
+
+    return new Promise((resolve) => {
+      const Text = isInput ? fabric.IText : fabric.Text;
+      const textObj = new Text(text, style);
+      this._setState({
+        text: textObj,
+        drawing: false,
+        _textAdded: false
+      });
+
+      resolve(this);
+    });
+  }
+
+  /**
+   * Place text object.
    *
    * @returns A promise that resolves to the stickerbook once the text is placed
    */
-  placeText(text, style, isInput=true) {
-    // Need validation for text?
-    /*if () {
-      throw new Error('This is not permitted text.');
-    }*/
-    const Text = isInput ? fabric.IText : fabric.Text;
-    const textObj = new Text(text, style);
+  placeText(options) {
+    const
+      textObj = this.state.text,
+      textConfig = this._config.text,
+      controls = textConfig?.controls,
+      defaults = textConfig?.defaults;
 
+    if (defaults) {
+      options.x = options.x || defaults.x;
+      options.y = options.y || defaults.y;
+      options.xScale = options.xScale || defaults.xScale;
+      options.yScale = options.yScale || defaults.yScale;
+      options.rotation = options.rotation || defaults.rotation;
+    }
+
+    options.xScale = options.xScale || 1;
+    options.yScale = options.yScale || 1;
+    options.rotation = options.rotation || 0;
+
+    if (typeof options.x === 'undefined' || typeof options.y === 'undefined') {
+      throw new Error('To place text an x and y must be provided if there is no default');
+    }
+
+    textObj.set({
+      left: options.x,
+      top: options.y,
+      scaleX: options.xScale,
+      scaleY: options.yScale,
+      angle: options.rotation,
+      perPixelTargetFind: true
+    });
+    textObj.setCoords();
     this._canvas.add(textObj);
+
+    // if there are any text control configs, apply those styles
+    if (controls) {
+      let hasBorders = controls.hasBorders;
+      if (typeof hasBorders === 'undefined') {
+        hasBorders = true;
+      }
+      textObj.set({
+        transparentCorners: false,
+        cornerSize: controls.cornerSize,
+        cornerColor: controls.cornerColor,
+        hasBorders: hasBorders
+      });
+    }
+
     this._canvas.setActiveObject(textObj);
 
+    // update state
     this._setState({
-      drawing: false
+      _textAdded: true
     });
 
     // re-render
