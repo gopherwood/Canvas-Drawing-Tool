@@ -25,7 +25,7 @@ const mouseUpHandler = function () {
 };
 
 const disableSelectabilityHandler = function (evt) {
-  if ((evt.target instanceof fabric.Image) || (evt.target instanceof fabric.IText) || (evt.target instanceof fabric.Text)) {
+  if ((evt.target instanceof fabric.Image) || (evt.target instanceof fabric.IText) || (evt.target instanceof fabric.Text) || (evt.target instanceof fabric.Textbox)) {
     return;
   }
 

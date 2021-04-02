@@ -600,16 +600,16 @@ class Stickerbook {
    * Set text object for placing.
    * @param {string} text - The text to be rendered.
    * @param {object} style - key/value pairs describing style to apply to text.
-   * @param {boolean} isInput - Whether text should be editable.
+   * @param {string} type - Whether text is editable ("input" [default]), or not ("text"), or a textbox ("textbox").
    * @returns {Promise<Stickerbook>} A promise that resolves to the stickerbook when the text is ready
    */
-   setText(text, style, isInput=true) {
+   setText(text, style, type = 'input') {
     if (this.lockConfiguration && this._config.text.enabled.indexOf(text) === -1) {
       throw new Error(`${text} is not permitted text`);
     }
 
     return new Promise((resolve) => {
-      const Text = isInput ? fabric.IText : fabric.Text;
+      const Text = type === 'text' ? fabric.Text : type === 'textbox' ? fabric.Textbox : fabric.IText;
       const textObj = new Text(text, style);
       this._setState({
         text: textObj,
