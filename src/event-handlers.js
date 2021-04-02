@@ -1,13 +1,9 @@
 const mouseDownHandler = function (evt) {
   if (!this.state.drawing) {
-    if (this.state.sticker) {
-      if (!this.state._stickerAdded) {
-        return this.placeSticker(this._canvas.getPointer(evt.e));
-      }
-    } else if (this.state.text) {
-      if (!this.state._textAdded) {
-        return this.placeText(this._canvas.getPointer(evt.e));
-      }
+    if ((this.state.sticker) && (!this.state._stickerAdded)) {
+      return this.placeSticker(this._canvas.getPointer(evt.e));
+    } else if ((this.state.text) && (!this.state._textAdded)) {
+      return this.placeText(this._canvas.getPointer(evt.e));
     }
   }
 

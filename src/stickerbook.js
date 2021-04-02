@@ -11,6 +11,7 @@ const BackgroundManager = require('./background-manager');
 const MarkerBrush = require('./brushes/marker-brush');
 const PatternBrush = require('./brushes/pattern-brush');
 const PencilEraserBrush = require('./brushes/pencil-eraser-brush');
+const TextboxPad = require('./objects/TextboxPad').default;
 const {
   disableSelectabilityHandler,
   mouseDownHandler,
@@ -350,7 +351,7 @@ class Stickerbook {
    *                                 loaded and is ready
    */
   setSticker(stickerUrl) {
-    if (this._config.stickers.enabled.indexOf(stickerUrl) === -1) {
+    if (this.lockConfiguration && this._config.stickers.enabled.indexOf(stickerUrl) === -1) {
       throw new Error(stickerUrl + ' is not a permitted sticker');
     }
 
@@ -609,7 +610,7 @@ class Stickerbook {
     }
 
     return new Promise((resolve) => {
-      const Text = type === 'text' ? fabric.Text : type === 'textbox' ? fabric.Textbox : fabric.IText;
+      const Text = type === 'text' ? fabric.Text : type === 'textbox' ? TextboxPad : fabric.IText;
       const textObj = new Text(text, style);
       this._setState({
         text: textObj,
