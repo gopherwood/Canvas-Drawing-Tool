@@ -315,7 +315,7 @@ class Stickerbook {
    * @returns {Object} Stickerbook
    */
   setBrushWidth(pixels) {
-    if (this._config.brush.widths.indexOf(pixels) === -1) {
+    if (this.lockConfiguration && this._config.brush.widths.indexOf(pixels) === -1) {
       throw new Error(pixels + ' is not a permitted brush width');
     }
 
