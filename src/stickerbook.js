@@ -525,6 +525,16 @@ class Stickerbook {
   }
 
   /**
+   * Get active object
+   *
+   * @return {Object|null} either the active object, or null if there
+   * is no active object
+   */
+   getActiveObject() {
+    return this._canvas.getActiveObject() || null;
+  }
+
+  /**
    * Places the current selected sticker programmatically on the canvas
    * @param {Object} options An object with options for the placement
    * @param {Number} options.x The x position at which to place the sticker
