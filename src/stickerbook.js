@@ -466,20 +466,45 @@ class Stickerbook {
    * @returns {string} A base64 string with the composited image in it
    */
   toDataURL() {
+    return this.getThumbnail().toDataURL();
+  }
+
+  /**
+   * Exports an image of the stickerbook as a canvas element. If dimensions are provided,
+   * it is scaled to fit. If the aspect ratio is different, the image is cropped to fit
+   * without stretching.
+   * 
+   * @param {number} width - Sets the width of the thumbnail image.
+   * @param {number} height - Sets the height of the thumbnail image.
+   * @returns {string} A base64 string with the composited image in it
+   */
+  getThumbnail(width, height) {
+    const
+      sourceWidth = this._canvas.lowerCanvasEl.width,
+      sourceHeight = this._canvas.lowerCanvasEl.height,
+      destinationWidth = width || sourceWidth,
+      destinationHeight = height || sourceHeight,
+      scaleWidth = destinationWidth / sourceWidth,
+      scaleHeight = destinationHeight / sourceHeight,
+      scale = Math.max(scaleWidth, scaleHeight),
+      scaledWidth = scale * sourceWidth,
+      scaledHeight = scale * sourceHeight,
+      offsetX = (destinationWidth - scaledWidth) / 2,
+      offsetY = (destinationHeight - scaledHeight) / 2;
     // deselect anything before exporting so we don't see scaling handles in the exported image
     this.deselectAll();
 
     const dummyCanvas = document.createElement('canvas');
-    dummyCanvas.width = this._canvas.lowerCanvasEl.width;
-    dummyCanvas.height = this._canvas.lowerCanvasEl.height;
+    dummyCanvas.width = destinationWidth;
+    dummyCanvas.height = destinationHeight;
     const dummyContext = dummyCanvas.getContext('2d');
 
-    dummyContext.drawImage(this.backgroundManager._canvas, 0, 0);
-    dummyContext.drawImage(this._canvas.lowerCanvasEl, 0, 0);
+    dummyContext.drawImage(this.backgroundManager._canvas, 0, 0, sourceWidth, sourceHeight, offsetX, offsetY, scaledWidth, scaledHeight);
+    dummyContext.drawImage(this._canvas.lowerCanvasEl, 0, 0, sourceWidth, sourceHeight, offsetX, offsetY, scaledWidth, scaledHeight);
 
-    return dummyCanvas.toDataURL();
+    return dummyCanvas;
   }
-
+  
   /**
    * Register a callback on an event
    *
