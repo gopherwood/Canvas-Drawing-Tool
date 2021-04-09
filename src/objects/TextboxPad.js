@@ -1,4 +1,14 @@
-export default fabric.util.createClass(fabric.Textbox, {
+const TextboxPad = fabric.TextboxPad = fabric.util.createClass(fabric.Textbox, {
+  type: 'TextboxPad',
+
+  initialize: function(text, options) {
+    if (typeof text === 'object' && typeof options === 'undefined') { // reviver breaks.
+      options = text;
+      text = options.text;
+    }
+    this.callSuper('initialize', text, options);
+  },
+
   _renderBackground: function (ctx) {
     if (!this.backgroundColor) {
       return;
@@ -16,5 +26,17 @@ export default fabric.util.createClass(fabric.Textbox, {
       // should be casted
       this._removeShadow(ctx);
     }
+  },
+
+  toObject: function() {
+    return fabric.util.object.extend(this.callSuper('toObject'), {
+      padding: this.padding
+    });
   }
 });
+
+fabric.TextboxPad.fromObject = function (object, callback, forceAsync) {
+  return fabric.Object._fromObject('TextboxPad', object, callback, forceAsync, 'text');
+};
+
+export default TextboxPad;
