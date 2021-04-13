@@ -12,6 +12,7 @@ const MarkerBrush = require('./brushes/marker-brush');
 const PatternBrush = require('./brushes/pattern-brush');
 const PencilEraserBrush = require('./brushes/pencil-eraser-brush');
 const TextboxPad = require('./objects/TextboxPad').default;
+const AudioSticker = require('./objects/AudioSticker').default;
 const {
   disableSelectabilityHandler,
   mouseDownHandler,
@@ -346,26 +347,34 @@ class Stickerbook {
    * Set sticker for placing. Note that this method is asynchronous because fabric will have to do
    * a network call to load the image.
    * @param {string} stickerUrl - URL of image for sticker use
+   * @param {string} audioUrl - URL of audio for sticker use
    *
    * @returns {Promise<Stickerbook>} A promise that resolves to the stickerbook when the image has
    *                                 loaded and is ready
    */
-  setSticker(stickerUrl) {
+  setSticker(stickerUrl, audioUrl) {
     if (this.lockConfiguration && this._config.stickers.enabled.indexOf(stickerUrl) === -1) {
       throw new Error(stickerUrl + ' is not a permitted sticker');
     }
 
     return new Promise((resolve) => {
-      fabric.Image.fromURL(stickerUrl, (img) => {
-        img.filters.push(new fabric.Image.filters.Resize());
-        this._setState({
-          sticker: img,
-          drawing: false,
-          _stickerAdded: false
-        });
+      const
+        callback = (img) => {
+          img.filters.push(new fabric.Image.filters.Resize());
+          this._setState({
+            sticker: img,
+            drawing: false,
+            _stickerAdded: false
+          });
 
-        resolve(this);
-      });
+          resolve(this);
+        };
+
+      if (audioUrl) {
+        AudioSticker.fromURL(stickerUrl, audioUrl, callback);
+      } else {
+        fabric.Image.fromURL(stickerUrl, callback);
+      }
     });
   }
 
