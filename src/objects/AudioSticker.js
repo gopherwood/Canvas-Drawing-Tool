@@ -16,8 +16,8 @@ const AudioSticker = fabric.AudioSticker = fabric.util.createClass(fabric.Image,
     });
   },
 
-  toObject: function() {
-    return fabric.util.object.extend(this.callSuper('toObject'), {
+  toObject: function (...args) {
+    return fabric.util.object.extend(this.callSuper('toObject', ...args), {
       audio: this.audio,
       playable: this.playable
     });
