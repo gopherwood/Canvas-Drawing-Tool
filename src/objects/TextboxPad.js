@@ -28,8 +28,8 @@ const TextboxPad = fabric.TextboxPad = fabric.util.createClass(fabric.Textbox, {
     }
   },
 
-  toObject: function() {
-    return fabric.util.object.extend(this.callSuper('toObject'), {
+  toObject: function (...args) {
+    return fabric.util.object.extend(this.callSuper('toObject', ...args), {
       padding: this.padding
     });
   }
