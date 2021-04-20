@@ -42,7 +42,7 @@ describe('HistoryManager', () => {
       var path = new fabric.Path('M 0 0', { });
       historyManager.pushNewFabricObject(path);
 
-      expect(historyManager.history[0][0].objectId).toNotEqual(undefined);
+      expect(historyManager.history[0][0].stickerbookObjectId).toNotEqual(undefined);
       expect(path.stickerbookObjectId).toNotEqual(undefined);
     });
 
@@ -142,7 +142,7 @@ describe('HistoryManager', () => {
       historyManager.history.push([{
         type: 'add',
         data: JSON.stringify(path),
-        objectId: 12345
+        stickerbookObjectId: 12345
       }]);
 
       historyManager.redo().then(() => {
@@ -166,17 +166,20 @@ describe('HistoryManager', () => {
     });
 
     it('should reapply multiple property changes if the next redo state has two things in it', (done) => {
-      var path = new fabric.Path('M 0 0', { stroke: 'red' });
+      var path = new fabric.Path('M 0 0', {
+        stroke: 'red',
+        stickerbookObjectId: 0
+      });
       historyManager.canvas.add(path);
       historyManager.pushPropertyChanges([
         {
-          objectIndex: 0,
+          stickerbookObjectId: 0,
           property: 'stroke',
           oldValue: 'red',
           newValue: 'blue'
         },
         {
-          objectIndex: 0,
+          stickerbookObjectId: 0,
           property: 'scaleX',
           oldValue: 1,
           newValue: 2

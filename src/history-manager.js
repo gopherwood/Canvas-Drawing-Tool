@@ -12,6 +12,7 @@ class HistoryManager {
     this.historyIndex = -1;
     this.canvas = canvas;
     this.objectIdCounter = 1;
+    this.currentlyRedoing = false;
   }
 
   /**
@@ -20,6 +21,10 @@ class HistoryManager {
    * @returns {void}
    */
   pushNewFabricObject(fabricObject) {
+    if (this.currentlyRedoing) { // prevent recording adds that are already in place.
+      return;
+    }
+
     // if there is any history after this point in time, nuke it.
     if(this.historyIndex < this.history.length - 1) {
       this.history = this.history.slice(0, this.historyIndex + 1);
@@ -30,7 +35,7 @@ class HistoryManager {
     this.history.push([{
       type: 'add',
       data: JSON.stringify(fabricObject),
-      objectId: this.objectIdCounter
+      stickerbookObjectId: this.objectIdCounter
     }]);
     this.historyIndex++;
     this.objectIdCounter++;
@@ -39,19 +44,19 @@ class HistoryManager {
   /**
    * Tracks a single property change to an object
    * @param {String} property The property name that changed (scaleX, top, angle, etc.)
-   * @param {Number} objectIndex The index in the display list that denotes which object changed
+   * @param {Number} stickerbookObjectId The id in the display list that denotes which object changed
    * @param {Number|String} oldValue The previous value of the property
    * @param {Number|String} newValue The new value of the property
    * @returns {void}
    */
-  pushPropertyChange(property, objectIndex, oldValue, newValue) {
-    this.pushPropertyChanges([{ property, objectIndex, oldValue, newValue }]);
+  pushPropertyChange(property, stickerbookObjectId, oldValue, newValue) {
+    this.pushPropertyChanges([{ property, stickerbookObjectId, oldValue, newValue }]);
   }
 
   /**
    * Batch tracks a set of changes so that they can be grouped together
    *
-   * @param {Array} changes An array of changes, with a property, objectIndex, oldValue, and
+   * @param {Array} changes An array of changes, with a property, stickerbookObjectId, oldValue, and
    *                        newValue keys
    * @returns {void}
    */
@@ -63,7 +68,7 @@ class HistoryManager {
 
     // perform a quick validation
     var isValid = changes.every(change => {
-      return change.objectIndex !== undefined && change.property !== undefined
+      return change.stickerbookObjectId !== undefined && change.property !== undefined
         && change.oldValue !== undefined && change.newValue !== undefined;
     });
 
@@ -99,15 +104,14 @@ class HistoryManager {
             .map(JSON.stringify)
             .indexOf(currentChange.data);
 
-          if(oldItemIndex > -1) {
+          if (oldItemIndex > -1) {
             this.canvas.remove(this.canvas.getObjects()[oldItemIndex]);
           }
-        } else if(currentChange.type === 'change') {
+        } else if (currentChange.type === 'change') {
           // if it's a property change, find the object and set the property
-          var object = this.canvas.getObjects()[currentChange.data.objectIndex];
-          if(object === undefined) {
-            var message = 'Attempted to retrieve object ' + currentChange.data.objectIndex
-              + ' but it\'s not there';
+          var object = this.getObjectByStickerbookObjectId(currentChange.data.stickerbookObjectId);
+          if (object === null) {
+            var message = `Attempted to retrieve object "${currentChange.data.stickerbookObjectId}" but it's not there.`;
             reject(new Error(message));
             return;
           }
@@ -151,16 +155,17 @@ class HistoryManager {
               reject(this);
               return;
             }
-            results[0].stickerbookObjectId = newChange.objectId;
+            results[0].stickerbookObjectId = newChange.stickerbookObjectId;
+            this.currentlyRedoing = true; // prevent recording adds that are already in place.
             this.canvas.add(results[0]);
+            this.currentlyRedoing = false;
             resolve(this);
           });
-        } else if(newChange.type === 'change') {
+        } else if (newChange.type === 'change') {
           // if it's a property change, set the property to the new value
-          var object = this.canvas.getObjects()[newChange.data.objectIndex];
-          if(object === undefined) {
-            var message = 'Attempted to retrieve object ' + newChange.data.objectIndex
-              + ' but it\'s not there';
+          var object = this.getObjectByStickerbookObjectId(newChange.data.stickerbookObjectId);
+          if (object === null) {
+            var message = `Attempted to retrieve object "${newChange.data.stickerbookObjectId}" but it's not there.`;
             reject(new Error(message));
             return;
           }
@@ -179,6 +184,37 @@ class HistoryManager {
       this.canvas.renderAll();
       return this;
     });
+  }
+
+  /**
+   * Returns an object's stickerbook id, and gives it one if it doesn't have one.
+   * @param {fabric.Object} fabriceObject The object to retrieve an id from.
+   * @returns {Number} The fabric object's stickerbook id.
+   */
+  getStickerbookObjectId (fabricObject) {
+    if (typeof fabricObject.stickerbookObjectId === 'undefined') {
+      fabricObject.stickerbookObjectId = this.objectIdCounter;
+      this.objectIdCounter += 1;
+    }
+
+    return fabricObject.stickerbookObjectId;
+  }
+
+  /**
+   * Returns an object by its stickerbook id.
+   * @param {Number} id The stickerbook id for the object to find.
+   * @returns {fabric.Object} The fabric object.
+   */
+  getObjectByStickerbookObjectId (id) {
+    const objects = this.canvas.getObjects();
+
+    for (let i = 0; i < objects.length; i++) {
+      if (objects[i].stickerbookObjectId === id) {
+        return objects[i];
+      }
+    }
+
+    return null;
   }
 }
 

@@ -41,19 +41,6 @@ const disableSelectabilityHandler = function (evt) {
  * @return {void}
  */
 const recordObjectAddition = function (historyManager, fabricEvent) {
-  // During a redo, the HistoryManager will automatically perform the canvas.add for us. We don't
-  // want to track history for this addition if it's a redo, because it'll cause duplicates in the
-  // stack
-  var serializedTarget = JSON.stringify(fabricEvent.target);
-  var objectAlreadyInHistory = historyManager.history
-    .reduce((a, b) => a.concat(b), []) // flatten the array
-    .filter((historyEvent) => historyEvent.type === 'add') // only get add events
-    .some((historyEvent) => historyEvent.data === serializedTarget); // target is already there?
-
-  if (objectAlreadyInHistory) {
-    return;
-  }
-
   historyManager.pushNewFabricObject(fabricEvent.target);
 };
 
@@ -70,10 +57,12 @@ const lastPropertyValue = function (historyManager, fabricObject, propertyName) 
   const flattenedHistory = historyManager.history.reduce((a, b) => a.concat(b), []);
   for (let i = flattenedHistory.length - 1; i >= 0; i--) {
     const historyEvent = flattenedHistory[i];
-    if (historyEvent.type === 'add' && historyEvent.objectId === fabricObject.stickerbookObjectId) {
-      return JSON.parse(historyEvent.data)[propertyName];
-    } else if (historyEvent.type === 'change' && historyEvent.data.property === propertyName) {
-      return historyEvent.data.newValue;
+    if (historyEvent.stickerbookObjectId === fabricObject.stickerbookObjectId) {
+      if (historyEvent.type === 'add') {
+        return JSON.parse(historyEvent.data)[propertyName];
+      } else if (historyEvent.type === 'change' && historyEvent.data.property === propertyName) {
+        return historyEvent.data.newValue;
+      }
     }
   }
   return null;
@@ -88,7 +77,7 @@ const lastPropertyValue = function (historyManager, fabricObject, propertyName) 
  */
 const recordPropertyChange = function (historyManager, fabricEvent) {
   const propertyNames = ['text', 'scaleX', 'scaleY', 'globalCompositeOperation', 'angle', 'left', 'top'];
-  const objectIndex = historyManager.canvas.getObjects().indexOf(fabricEvent.target);
+  const stickerbookObjectId = historyManager.getStickerbookObjectId(fabricEvent.target);
   const propertyDeltas = [];
   
   propertyNames.forEach(function (property) {
@@ -97,7 +86,7 @@ const recordPropertyChange = function (historyManager, fabricEvent) {
     if (oldValue !== newValue) {
       propertyDeltas.push({
         property,
-        objectIndex,
+        stickerbookObjectId,
         oldValue,
         newValue
       });
