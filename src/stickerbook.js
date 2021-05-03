@@ -372,6 +372,27 @@ class Stickerbook {
 
       if (audioUrl) {
         AudioSticker.fromURL(stickerUrl, audioUrl, callback);
+      } else if (stickerUrl.indexOf('.mp4') >= 0) { // TODO: make a better check here.
+        const
+          videoElement = document.createElement('video'),
+          sourceElement = document.createElement('source');
+        
+        videoElement.appendChild(sourceElement);
+        sourceElement.type = `video/mp4`;
+        videoElement.addEventListener('loadedmetadata', () => {
+          videoElement.width = videoElement.videoWidth;
+          videoElement.height = videoElement.videoHeight;
+          callback(new fabric.Image(videoElement, {
+            originX: 'center',
+            originY: 'center',
+            objectCaching: false
+          }));
+        });
+        videoElement.addEventListener('canplay', () => {
+          videoElement.play();
+        });
+        sourceElement.src = stickerUrl;
+        videoElement.load();
       } else {
         fabric.Image.fromURL(stickerUrl, callback);
       }
