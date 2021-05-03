@@ -360,7 +360,7 @@ class Stickerbook {
     return new Promise((resolve) => {
       const
         callback = (img) => {
-          img.filters.push(new fabric.Image.filters.Resize());
+          img.filters?.push(new fabric.Image.filters.Resize());
           this._setState({
             sticker: img,
             drawing: false,
@@ -371,7 +371,10 @@ class Stickerbook {
         };
 
       if (audioUrl) {
-        AudioSticker.fromURL(stickerUrl, audioUrl, callback);
+        AudioSticker.fromURL({
+          image: stickerUrl,
+          audio: audioUrl
+        }, callback);
       } else if (stickerUrl.indexOf('.mp4') >= 0) { // TODO: make a better check here.
         const
           videoElement = document.createElement('video'),
@@ -383,6 +386,7 @@ class Stickerbook {
           videoElement.width = videoElement.videoWidth;
           videoElement.height = videoElement.videoHeight;
           callback(new fabric.Image(videoElement, {
+            backgroundColor: '#000000',
             originX: 'center',
             originY: 'center',
             objectCaching: false
@@ -391,6 +395,8 @@ class Stickerbook {
         videoElement.addEventListener('canplay', () => {
           videoElement.play();
         });
+        videoElement.crossOrigin = "Anonymous";
+        sourceElement.crossOrigin = "Anonymous";
         sourceElement.src = stickerUrl;
         videoElement.load();
       } else {

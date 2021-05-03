@@ -1,3 +1,23 @@
+const isPathsAllTheWayDown = (target) => {
+  if (target instanceof fabric.Path) {
+      return true;
+  } else if (target instanceof fabric.Group) {
+      const
+          objects = target._objects;
+      let i = objects.length;
+
+      while (i--) {
+          if (!isPathsAllTheWayDown(objects[i])) {
+              return false;
+          }
+      }
+
+      return true;
+  } else {
+      return false;
+  }
+};
+
 const mouseDownHandler = function (evt) {
   if (!this.state.drawing) {
     if ((this.state.sticker) && (!this.state._stickerAdded)) {
@@ -21,17 +41,15 @@ const mouseUpHandler = function () {
 };
 
 const disableSelectabilityHandler = function (evt) {
-  if ((evt.target instanceof fabric.Image) || (evt.target instanceof fabric.IText) || (evt.target instanceof fabric.Text) || (evt.target instanceof fabric.Textbox)) {
-    return;
+  if (isPathsAllTheWayDown(evt.target)) {
+    // if the object isn't an image, then it'll be freehand drawing of some sort. Make that item not
+    // selectable
+    evt.target.selectable = false;
+    evt.target.hasControls = false;
+    evt.target.hasBorders = false;
+    evt.target.active = false;
+    this.triggerRender();
   }
-
-  // if the object isn't an image, then it'll be freehand drawing of some sort. Make that item not
-  // selectable
-  evt.target.selectable = false;
-  evt.target.hasControls = false;
-  evt.target.hasBorders = false;
-  evt.target.active = false;
-  this.triggerRender();
 };
 
 /**
