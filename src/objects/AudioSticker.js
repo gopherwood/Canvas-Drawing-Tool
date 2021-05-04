@@ -30,10 +30,15 @@ const
   AudioSticker = fabric.AudioSticker = fabric.util.createClass(fabric.Group, {
   type: 'AudioSticker',
 
-  initialize: function({image, audio, playButton}, options) {
+  initialize: function({image, audio, playButton}, options = {}) {
     const
-      playButtonImage = new fabric.Image(playButton, options),
-      icon = new fabric.Image(image, options),
+      {crossOrigin} = options,
+      playButtonImage = new fabric.Image(playButton, {
+        crossOrigin
+      }),
+      icon = new fabric.Image(image, {
+        crossOrigin
+      }),
       audioElement = loadedAudio[audio] = loadedAudio[audio] || new Audio(audio);
     
     this.audio = audio;
@@ -53,12 +58,12 @@ const
     this.callSuper('initialize', [
       icon,
       playButtonImage
-    ], {
+    ], fabric.util.object.extend(options, {
       subTargetCheck: true,
       selectable: true,
       hasControls: true,
       hasBorders: true
-    });
+    }));
   },
 
   toObject: function (...args) {
@@ -104,9 +109,7 @@ AudioSticker.fromObject = function (object, callback, forceAsync) {
           image,
           audio,
           playButton
-        }, {
-          crossOrigin
-        }), isError);
+        }, object), isError);
       });
     });
   });

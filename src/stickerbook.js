@@ -13,6 +13,7 @@ const PatternBrush = require('./brushes/pattern-brush');
 const PencilEraserBrush = require('./brushes/pencil-eraser-brush');
 const TextboxPad = require('./objects/TextboxPad').default;
 const AudioSticker = require('./objects/AudioSticker').default;
+const VideoSticker = require('./objects/VideoSticker').default;
 const {
   disableSelectabilityHandler,
   mouseDownHandler,
@@ -29,6 +30,10 @@ const schema = {
   bitmap: schemaBitmap,
   'bitmap-eraser': schemaBitmapEraser
 };
+
+let rafOn = false,
+  playingVideos = [];
+
 class Stickerbook {
   /**
    * Construct new stickerbook
@@ -89,6 +94,34 @@ class Stickerbook {
     this.historyManager = new HistoryManager(this._canvas);
     this._canvas.on('object:added', (event) => recordObjectAddition(this.historyManager, event));
     this._canvas.on('object:modified', (event) => recordPropertyChange(this.historyManager, event));
+    this._canvas.on('object:added', (event) => {
+      if (event.target instanceof VideoSticker) {
+        const video = event.target;
+        
+        playingVideos.push(video._objects[0]._element);
+
+        if (!rafOn) {
+          const
+            raf = (timestamp) => {
+              if (this.isDestroyed) {
+                rafOn = false;
+              } else {
+                for (let i = 0; i < playingVideos.length; i++) {
+                  if (!playingVideos[i].paused && !playingVideos[i].ended) {
+                    this.triggerRender();
+                    break;
+                  }
+                }
+
+                window.requestAnimationFrame(raf);
+              }
+            };
+
+          rafOn = true;
+          window.requestAnimationFrame(raf);
+        }
+      }
+    });
 
     if (this._config.background && this._config.background.default) {
       this.setBackground(this._config.background.default);
@@ -376,29 +409,9 @@ class Stickerbook {
           audio: audioUrl
         }, callback);
       } else if (stickerUrl.indexOf('.mp4') >= 0) { // TODO: make a better check here.
-        const
-          videoElement = document.createElement('video'),
-          sourceElement = document.createElement('source');
-        
-        videoElement.appendChild(sourceElement);
-        sourceElement.type = `video/mp4`;
-        videoElement.addEventListener('loadedmetadata', () => {
-          videoElement.width = videoElement.videoWidth;
-          videoElement.height = videoElement.videoHeight;
-          callback(new fabric.Image(videoElement, {
-            backgroundColor: '#000000',
-            originX: 'center',
-            originY: 'center',
-            objectCaching: false
-          }));
-        });
-        videoElement.addEventListener('canplay', () => {
-          videoElement.play();
-        });
-        videoElement.crossOrigin = "Anonymous";
-        sourceElement.crossOrigin = "Anonymous";
-        sourceElement.src = stickerUrl;
-        videoElement.load();
+        VideoSticker.fromURL({
+          video: stickerUrl
+        }, callback);
       } else {
         fabric.Image.fromURL(stickerUrl, callback);
       }
@@ -764,7 +777,7 @@ class Stickerbook {
    * @return {Object} stickerbook
    */
   triggerRender() {
-    this._canvas.renderAll();
+    this._canvas.requestRenderAll();
     return this;
   }
 
