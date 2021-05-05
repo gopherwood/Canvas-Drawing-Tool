@@ -30,8 +30,9 @@ const
   AudioSticker = fabric.AudioSticker = fabric.util.createClass(fabric.Group, {
   type: 'AudioSticker',
 
-  initialize: function({image, audio, playButton}, options = {}) {
+  initialize: function({image, audio, playButton, start = 0, end = -1}, options = {}) {
     const
+      key = `${audio}${start}${end !== -1 ? '-' + end : ''}`,
       {crossOrigin} = options,
       playButtonImage = new fabric.Image(playButton, {
         crossOrigin
@@ -39,12 +40,29 @@ const
       icon = new fabric.Image(image, {
         crossOrigin
       }),
-      audioElement = loadedAudio[audio] = loadedAudio[audio] || new Audio(audio);
+      audioElement = loadedAudio[key] = loadedAudio[key] || new Audio(audio);
     
     this.audio = audio;
     this.image = image.src;
     this.playButton = playButton.src;
-    
+    this.start = start;
+    this.end = end;
+
+    if (start > 0) {
+      audioElement.addEventListener('play', () => {
+        if (audioElement.currentTime < start) {
+          audioElement.currentTime = start;
+        }
+      });
+    }
+    if (end > start) {
+      audioElement.addEventListener('timeupdate', () => {
+        if (audioElement.currentTime >= end) {
+          audioElement.currentTime = start;
+          audioElement.pause();
+        }
+      });
+    }
 
     playButtonImage.on('mousedown', function(e) { 
       console.log(`Playing ${this.audio}`);
@@ -74,12 +92,14 @@ const
     return fabric.util.object.extend(group, {
       audio: this.audio,
       image: this.image,
-      playButton: this.playButton
+      playButton: this.playButton,
+      start: this.start,
+      end: this.end
     });
   }
 });
 
-AudioSticker.fromURL = function({image, audio, playButton = PLAY_BUTTON}, callback, imgOptions) {
+AudioSticker.fromURL = function({image, audio, playButton = PLAY_BUTTON, start, end}, callback, imgOptions) {
   loadImages({
     image,
     playButton
@@ -87,13 +107,15 @@ AudioSticker.fromURL = function({image, audio, playButton = PLAY_BUTTON}, callba
     callback && callback(new AudioSticker({
       image,
       audio,
-      playButton
+      playButton,
+      start,
+      end
     }, imgOptions), isError);
   });
 };
 
 AudioSticker.fromObject = function (object, callback, forceAsync) {
-  const {image, audio, playButton, crossOrigin} = object;
+  const {image, audio, playButton, start, end, crossOrigin} = object;
 
   loadImages({
     image,
@@ -108,7 +130,9 @@ AudioSticker.fromObject = function (object, callback, forceAsync) {
         callback && callback(new AudioSticker({
           image,
           audio,
-          playButton
+          playButton,
+          start,
+          end
         }, object), isError);
       });
     });

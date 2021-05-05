@@ -36,7 +36,7 @@ const TextboxPad = fabric.TextboxPad = fabric.util.createClass(fabric.Textbox, {
 });
 
 fabric.TextboxPad.fromObject = function (object, callback, forceAsync) {
-  return fabric.Object._fromObject('TextboxPad', object, callback, forceAsync, 'text');
+  return fabric.Object._fromObject('TextboxPad', object, callback, forceAsync);
 };
 
 export default TextboxPad;

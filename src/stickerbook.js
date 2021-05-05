@@ -379,15 +379,15 @@ class Stickerbook {
   /**
    * Set sticker for placing. Note that this method is asynchronous because fabric will have to do
    * a network call to load the image.
-   * @param {string} stickerUrl - URL of image for sticker use
+   * @param {string} image - URL of image for sticker use
    * @param {string} audioUrl - URL of audio for sticker use
    *
    * @returns {Promise<Stickerbook>} A promise that resolves to the stickerbook when the image has
    *                                 loaded and is ready
    */
-  setSticker(stickerUrl, audioUrl) {
-    if (this.lockConfiguration && this._config.stickers.enabled.indexOf(stickerUrl) === -1) {
-      throw new Error(stickerUrl + ' is not a permitted sticker');
+  setSticker({image, audio, video, start, end}) {
+    if (this.lockConfiguration && this._config.stickers.enabled.indexOf(image) === -1) {
+      throw new Error(image + ' is not a permitted sticker');
     }
 
     return new Promise((resolve) => {
@@ -403,17 +403,21 @@ class Stickerbook {
           resolve(this);
         };
 
-      if (audioUrl) {
+      if (audio) {
         AudioSticker.fromURL({
-          image: stickerUrl,
-          audio: audioUrl
+          image,
+          audio,
+          start,
+          end
         }, callback);
-      } else if (stickerUrl.indexOf('.mp4') >= 0) { // TODO: make a better check here.
+      } else if (video) {
         VideoSticker.fromURL({
-          video: stickerUrl
+          video,
+          start,
+          end
         }, callback);
       } else {
-        fabric.Image.fromURL(stickerUrl, callback);
+        fabric.Image.fromURL(image, callback);
       }
     });
   }

@@ -3,8 +3,10 @@ import PLAY_BUTTON from '../images/play-button.svg';
 
 const
   loadedVideo = {},
-  getVideo = (path, callback) => {
-    let videoElement = loadedVideo[path];
+  getVideo = (path, start = 0, end = -1, callback) => {
+    const
+      key = `${path}${start}${end !== -1 ? '-' + end : ''}`;
+    let videoElement = loadedVideo[key];
 
     if (videoElement) {
       callback(videoElement);
@@ -17,7 +19,7 @@ const
           callback(videoElement);
         };
       
-      videoElement = loadedVideo[path] = document.createElement('video');
+      videoElement = loadedVideo[key] = document.createElement('video');
       videoElement.appendChild(sourceElement);
       sourceElement.type = `video/${path.substring(path.lastIndexOf('.') + 1)}`;
       videoElement.addEventListener('loadedmetadata', () => {
@@ -36,7 +38,7 @@ const
 
     return videoElement;
   },
-  loadImages = (images, imgOptions, callback) => {
+  loadImages = (images, start, end, imgOptions, callback) => {
     const
       whenReady = () => {
         for (const key in images) {
@@ -54,7 +56,7 @@ const
       const image = images[key];
 
       if (image.indexOf('.mp4') >= 0) { // TODO: make a better check here.
-        getVideo(image, (video) => {
+        getVideo(image, start, end, (video) => {
           loadedImages[key] = video;
           whenReady();
         });
@@ -70,7 +72,7 @@ const
   VideoSticker = fabric.VideoSticker = fabric.util.createClass(fabric.Group, {
     type: 'VideoSticker',
 
-    initialize: function({video, playButton}, options = {}) {
+    initialize: function({video, playButton, start = 0, end = -1}, options = {}) {
       const
         {crossOrigin} = options,
         playButtonImage = new fabric.Image(playButton, {
@@ -85,7 +87,25 @@ const
       
       this.video = video.querySelector('source').src;
       this.playButton = playButton.src;
+      this.start = start;
+      this.end = end;
 
+      if (start > 0) {
+        video.addEventListener('play', () => {
+          if (video.currentTime < start) {
+            video.currentTime = start;
+          }
+        });
+      }
+      if (end > start) {
+        video.addEventListener('timeupdate', () => {
+          if (video.currentTime >= end) {
+            video.currentTime = start;
+            video.pause();
+          }
+        });
+      }
+  
       playButtonImage.on('mousedown', function(e) {
         if (video.ended || video.paused) {
           console.log(`Playing ${this.video}`);
@@ -131,30 +151,34 @@ const
 
       return fabric.util.object.extend(group, {
         video: this.video,
-        playButton: this.playButton
+        playButton: this.playButton,
+        start: this.start,
+        end: this.end
       });
     }
   });
 
-VideoSticker.fromURL = function({video, playButton = PLAY_BUTTON}, callback, imgOptions) {
+VideoSticker.fromURL = function({video, playButton = PLAY_BUTTON, start, end}, callback, imgOptions) {
   loadImages({
     video,
     playButton
-  }, imgOptions, ({video, playButton}, isError) => {
+  }, start, end, imgOptions, ({video, playButton}, isError) => {
     callback && callback(new VideoSticker({
       video,
-      playButton
+      playButton,
+      start,
+      end
     }, imgOptions), isError);
   });
 };
 
 VideoSticker.fromObject = function (object, callback, forceAsync) {
-  const {video, playButton, crossOrigin} = object;
+  const {video, playButton, start, end, crossOrigin} = object;
 
   loadImages({
     video,
     playButton
-  }, {
+  }, start, end, {
     crossOrigin
   }, ({video, playButton}, isError) => {
     fabric.Image.prototype._initFilters.call(object, object.filters, function(filters) {
@@ -163,7 +187,9 @@ VideoSticker.fromObject = function (object, callback, forceAsync) {
         object.resizeFilter = resizeFilters[0];
         callback && callback(new VideoSticker({
           video,
-          playButton
+          playButton,
+          start,
+          end
         }, object), isError);
       });
     });
