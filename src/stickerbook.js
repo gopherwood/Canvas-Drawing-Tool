@@ -97,7 +97,7 @@ class Stickerbook {
     this._canvas.on('object:added', (event) => {
       if (event.target instanceof VideoSticker) {
         const video = event.target;
-        
+
         playingVideos.push(video._objects[0]._element);
 
         if (!rafOn) {
@@ -465,7 +465,7 @@ class Stickerbook {
       return this;
     }
 
-    const backgroundImageIsEnabled = this._config.background.enabled.indexOf(imageUrl) > -1;
+    const backgroundImageIsEnabled = !this.lockConfiguration || this._config.background.enabled.indexOf(imageUrl) > -1;
 
     if (!backgroundImageIsEnabled) {
       throw new Error(`${imageUrl} is not a permitted background`);
