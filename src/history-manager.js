@@ -12,7 +12,7 @@ class HistoryManager {
     this.historyIndex = -1;
     this.canvas = canvas;
     this.objectIdCounter = 1;
-    this.currentlyRedoing = false;
+    this.currentlyEditingHistory = false;
   }
 
   /**
@@ -20,8 +20,8 @@ class HistoryManager {
    * @param {fabric.Object} fabricObject A fabric object (Path, Image, etc.)
    * @returns {void}
    */
-  pushNewFabricObject(fabricObject) {
-    if (this.currentlyRedoing) { // prevent recording adds that are already in place.
+   pushNewFabricObject(fabricObject) {
+    if (this.currentlyEditingHistory) { // prevent recording adds that are already in place.
       return;
     }
 
@@ -39,6 +39,29 @@ class HistoryManager {
     }]);
     this.historyIndex++;
     this.objectIdCounter++;
+  }
+
+  /**
+   * Tracks an object removed from the canvas
+   * @param {fabric.Object} fabricObject A fabric object (Path, Image, etc.)
+   * @returns {void}
+   */
+   deleteFabricObject(fabricObject) {
+    if (this.currentlyEditingHistory) { // prevent recording deletes that are already in place.
+      return;
+    }
+
+    // if there is any history after this point in time, nuke it.
+    if(this.historyIndex < this.history.length - 1) {
+      this.history = this.history.slice(0, this.historyIndex + 1);
+    }
+
+    this.history.push([{
+      type: 'remove',
+      data: JSON.stringify(fabricObject),
+      stickerbookObjectId: fabricObject.stickerbookObjectId
+    }]);
+    this.historyIndex++;
   }
 
   /**
@@ -98,15 +121,19 @@ class HistoryManager {
     // un-applies a single change in the history array (add or a delete)
     const processChange = currentChange => {
       return new Promise((resolve, reject) => {
-        if(currentChange.type === 'add') {
-          // if the change is an add, find the item and remove it
-          var oldItemIndex = this.canvas.getObjects()
-            .map(JSON.stringify)
-            .indexOf(currentChange.data);
+        if (currentChange.type === 'add') {
+          const objects = this.canvas.getObjects();
 
-          if (oldItemIndex > -1) {
-            this.canvas.remove(this.canvas.getObjects()[oldItemIndex]);
+          // if the change is an add, find the item and remove it
+          for (let i = 0; i < objects.length; i++) {
+            if (objects[i].stickerbookObjectId === currentChange.stickerbookObjectId) {
+              this.currentlyEditingHistory = true; // prevent recording removals that are already in place.
+              this.canvas.remove(objects[i]);
+              this.currentlyEditingHistory = false;
+              break;
+            }
           }
+          resolve(this);
         } else if (currentChange.type === 'change') {
           // if it's a property change, find the object and set the property
           var object = this.getObjectByStickerbookObjectId(currentChange.data.stickerbookObjectId);
@@ -118,8 +145,24 @@ class HistoryManager {
 
           object.set(currentChange.data.property, currentChange.data.oldValue);
           object.setCoords();
+          resolve(this);
+        } else if (currentChange.type === 'remove') {
+          // if it's a removal, re-hydrate the fabric instance and add back to the canvas
+          var parsed = JSON.parse(currentChange.data);
+          fabric.util.enlivenObjects([parsed], results => {
+            if(results.length < 1) {
+              reject(this);
+              return;
+            }
+            results[0].stickerbookObjectId = currentChange.stickerbookObjectId;
+            this.currentlyEditingHistory = true; // prevent recording adds that are already in place.
+            this.canvas.add(results[0]);
+            this.currentlyEditingHistory = false;
+            resolve(this);
+          });
+        } else {
+          reject(new Error(`Invalid history type: "${currentChange.type}".`));
         }
-        resolve(this);
       });
     };
 
@@ -156,9 +199,9 @@ class HistoryManager {
               return;
             }
             results[0].stickerbookObjectId = newChange.stickerbookObjectId;
-            this.currentlyRedoing = true; // prevent recording adds that are already in place.
+            this.currentlyEditingHistory = true; // prevent recording adds that are already in place.
             this.canvas.add(results[0]);
-            this.currentlyRedoing = false;
+            this.currentlyEditingHistory = false;
             resolve(this);
           });
         } else if (newChange.type === 'change') {
@@ -173,6 +216,21 @@ class HistoryManager {
           object.set(newChange.data.property, newChange.data.newValue);
           object.setCoords();
           resolve(this);
+        } else if (newChange.type === 'remove') {
+          const objects = this.canvas.getObjects();
+
+          // if the change is a removal, find the item and remove it
+          for (let i = 0; i < objects.length; i++) {
+            if (objects[i].stickerbookObjectId === newChange.stickerbookObjectId) {
+              this.currentlyEditingHistory = true; // prevent recording removals that are already in place.
+              this.canvas.remove(objects[i]);
+              this.currentlyEditingHistory = false;
+              break;
+            }
+          }
+          resolve(this);
+        } else {
+          reject(new Error(`Invalid history type: "${newChange.type}".`));
         }
       });
     };

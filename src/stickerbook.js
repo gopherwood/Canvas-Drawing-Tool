@@ -19,7 +19,8 @@ const {
   mouseDownHandler,
   mouseUpHandler,
   recordObjectAddition,
-  recordPropertyChange
+  recordPropertyChange,
+  recordObjectDeletion
 } = require('./event-handlers');
 const {calculateInnerDimensions} = require('./util');
 const HistoryManager = require('./history-manager');
@@ -94,6 +95,7 @@ class Stickerbook {
     this.historyManager = new HistoryManager(this._canvas);
     this._canvas.on('object:added', (event) => recordObjectAddition(this.historyManager, event));
     this._canvas.on('object:modified', (event) => recordPropertyChange(this.historyManager, event));
+    this._canvas.on('object:removed', (event) => recordObjectDeletion(this.historyManager, event));
     this._canvas.on('object:added', (event) => {
       if (event.target instanceof VideoSticker) {
         const video = event.target;
@@ -608,8 +610,12 @@ class Stickerbook {
    * @return {Object|null} either the active object, or null if there
    * is no active object
    */
-   getActiveObject() {
+  getActiveObject () {
     return this._canvas.getActiveObject() || null;
+  }
+
+  removeObject (object) {
+    this._canvas.remove(object);
   }
 
   /**

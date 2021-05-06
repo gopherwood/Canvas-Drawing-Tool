@@ -63,6 +63,16 @@ const recordObjectAddition = function (historyManager, fabricEvent) {
 };
 
 /**
+ * Event handler to track when a new object is added to the fabric canvas
+ * @param {HistoryManager} historyManager The history manager to track the change in
+ * @param {Event} fabricEvent An object with a target property, which is a fabric.Object
+ * @return {void}
+ */
+const recordObjectDeletion = function (historyManager, fabricEvent) {
+  historyManager.deleteFabricObject(fabricEvent.target);
+};
+
+/**
  * Helper function to find the previous value of a particular property on a fabric.Object by
  * trawling through past history
  *
@@ -114,9 +124,10 @@ const recordPropertyChange = function (historyManager, fabricEvent) {
 };
 
 module.exports = {
-  disableSelectabilityHandler: disableSelectabilityHandler,
-  mouseDownHandler: mouseDownHandler,
-  mouseUpHandler: mouseUpHandler,
-  recordObjectAddition: recordObjectAddition,
-  recordPropertyChange: recordPropertyChange
+  disableSelectabilityHandler,
+  mouseDownHandler,
+  mouseUpHandler,
+  recordObjectAddition,
+  recordPropertyChange,
+  recordObjectDeletion
 };
