@@ -120,6 +120,7 @@ class BackgroundManager {
     this.imageLoaded = false;
     this.backgroundImage = new Image();
     this.backgroundImage.addEventListener('load', this.onBackgroundLoaded.bind(this));
+    this.backgroundImage.crossOrigin = "Anonymous";
     this.backgroundImage.src = imageSrc;
   }
 

@@ -411,15 +411,15 @@ class Stickerbook {
           audio,
           start,
           end
-        }, callback);
+        }, callback, {crossOrigin: 'Anonymous'});
       } else if (video) {
         VideoSticker.fromURL({
           video,
           start,
           end
-        }, callback);
+        }, callback, {crossOrigin: 'Anonymous'});
       } else {
-        fabric.Image.fromURL(image, callback);
+        fabric.Image.fromURL(image, callback, {crossOrigin: 'Anonymous'});
       }
     });
   }
