@@ -12,7 +12,6 @@ const
       callback(videoElement);
     } else {
       const
-        sourceElement = document.createElement('source'),
         stopper = () => {
           videoElement.removeEventListener('play', stopper);
           videoElement.pause();
@@ -20,8 +19,6 @@ const
         };
       
       videoElement = loadedVideo[key] = document.createElement('video');
-      videoElement.appendChild(sourceElement);
-      sourceElement.type = `video/${path.substring(path.lastIndexOf('.') + 1)}`;
       videoElement.addEventListener('loadedmetadata', () => {
         videoElement.width = videoElement.videoWidth;
         videoElement.height = videoElement.videoHeight;
@@ -31,8 +28,7 @@ const
       });
       videoElement.addEventListener('play', stopper);
       videoElement.crossOrigin = "Anonymous";
-      sourceElement.crossOrigin = "Anonymous";
-      sourceElement.src = path;
+      videoElement.src = path;
       videoElement.load();
     }
 
@@ -55,7 +51,7 @@ const
     for (const key in images) {
       const image = images[key];
 
-      if (image.indexOf('.mp4') >= 0) { // TODO: make a better check here.
+      if (key === 'video') {
         getVideo(image, start, end, (video) => {
           loadedImages[key] = video;
           whenReady();
@@ -85,7 +81,7 @@ const
           objectCaching: false
         });
       
-      this.video = video.querySelector('source').src;
+      this.video = video.src;
       this.playButton = playButton.src;
       this.start = start;
       this.end = end;
