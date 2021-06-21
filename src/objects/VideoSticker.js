@@ -2,6 +2,7 @@ import {fabric} from 'fabric';
 import PLAY_BUTTON from '../images/play-button.svg';
 
 const
+  AUTOPLAY = false,
   loadedVideo = {},
   getVideo = (path, start = 0, end = -1, callback) => {
     const
@@ -10,7 +11,7 @@ const
 
     if (videoElement) {
       callback(videoElement);
-    } else {
+    } else if (AUTOPLAY) {
       const
         stopper = () => {
           videoElement.removeEventListener('play', stopper);
@@ -27,6 +28,16 @@ const
         videoElement.play();
       });
       videoElement.addEventListener('play', stopper);
+      videoElement.crossOrigin = "Anonymous";
+      videoElement.src = path;
+      videoElement.load();
+    } else {
+      videoElement = loadedVideo[key] = document.createElement('video');
+      videoElement.addEventListener('loadedmetadata', () => {
+        videoElement.width = videoElement.videoWidth;
+        videoElement.height = videoElement.videoHeight;
+        callback(videoElement);
+      });
       videoElement.crossOrigin = "Anonymous";
       videoElement.src = path;
       videoElement.load();
