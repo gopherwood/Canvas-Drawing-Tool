@@ -69,9 +69,9 @@ const
       audioElement.play();
     });
 
-    playButtonImage.scaleX = playButtonImage.scaleY = 1 / 8;
-    playButtonImage.top = icon.width - playButtonImage.width / 8;
-    playButtonImage.left = icon.height - playButtonImage.height / 8;
+    playButtonImage.scaleX = playButtonImage.scaleY = (icon.width / 3) / playButtonImage.width;
+    playButtonImage.top = icon.width - playButtonImage.width * playButtonImage.scaleX;
+    playButtonImage.left = icon.height - playButtonImage.height * playButtonImage.scaleY;
 
     this.callSuper('initialize', [
       icon,
