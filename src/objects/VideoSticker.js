@@ -135,9 +135,9 @@ const
         playButtonImage.visible = true;
       });
 
-      playButtonImage.scaleX = playButtonImage.scaleY = (videoObject.width >> 3) / playButtonImage.width;
-      playButtonImage.left = -playButtonImage.width >> 1;
-      playButtonImage.top = -playButtonImage.height >> 1;
+      playButtonImage.scaleX = playButtonImage.scaleY = (videoObject.width / 6) / playButtonImage.width;
+      playButtonImage.left = -playButtonImage.width * playButtonImage.scaleX / 2;
+      playButtonImage.top = -playButtonImage.height * playButtonImage.scaleY / 2;
 
       this.callSuper('initialize', [
         videoObject,
