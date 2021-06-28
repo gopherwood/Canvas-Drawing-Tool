@@ -64,9 +64,14 @@ const
       });
     }
 
-    playButtonImage.on('mousedown', function(e) { 
-      console.log(`Playing ${this.audio}`);
-      audioElement.play();
+    playButtonImage.on('mousedown', function(e) {
+      if (audioElement.ended || audioElement.paused) {
+        console.log(`Playing ${this.audio}`);
+        audioElement.play();
+      } else {
+        console.log(`Pausing ${this.audio}`);
+        audioElement.pause();
+      }
     });
 
     playButtonImage.scaleX = playButtonImage.scaleY = (icon.width / 3) / playButtonImage.width;
